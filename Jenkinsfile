@@ -19,7 +19,7 @@ pipeline {
     )
     string(
       name: 'BACKEND_REPO_URL',
-      defaultValue: 'https://github.com/bnwDunk/OEM-backend.git',
+      defaultValue: 'https://github.com/P-Piya-Solution/OEM-backend.git',
       description: 'Git URL for OEM-backend repository.'
     )
     string(
