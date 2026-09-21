@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, DragEvent, FormEvent, SetStateAction } from 'react'
 import toast from 'react-hot-toast'
 import { normalizeStagePhaseLabels } from '../../data/oemWorkflow'
@@ -146,6 +146,33 @@ function ConfigView({ accessToken, canDeleteFlow = false, canReorder = false, cu
   const workflowListPath = canDeleteFlow ? '/admin/flows' : '/workflow/flows'
   const workflowStructureBasePath = canDeleteFlow ? '/admin/flows' : '/workflow/flows'
 
+  const fetchWorkflowStructure = useCallback(async (flowId: number) => {
+    const paths = [
+      `${workflowStructureBasePath}/${flowId}/structure`,
+      `/workflow/flows/${flowId}/structure`,
+      `/admin/flows/${flowId}/structure`,
+    ].filter((path, index, all) => all.indexOf(path) === index)
+    let lastResponse: FlowStructureResponse | null = null
+    let lastError: unknown = null
+
+    for (const path of paths) {
+      try {
+        const response = await apiRequest<FlowStructureResponse>(path, { token: accessToken })
+        lastResponse = response
+        const hasChecklistBranches = response.stages.some((stage) =>
+          stage.phases.some((phase) => (phase.branches || []).length > 0),
+        )
+
+        if (hasChecklistBranches || path === paths[paths.length - 1]) return response
+      } catch (error) {
+        lastError = error
+      }
+    }
+
+    if (lastResponse) return lastResponse
+    throw lastError instanceof Error ? lastError : new Error('Unable to load workflow structure.')
+  }, [accessToken, workflowStructureBasePath])
+
   const editableDept = useMemo(() => {
     const current = departments.find((department) => normalizeDept(department) === normalizeDept(currentDept))
     return current || currentDept || ''
@@ -209,6 +236,7 @@ function ConfigView({ accessToken, canDeleteFlow = false, canReorder = false, cu
 
   useEffect(() => {
     if (selectedWorkflowId === null || workflowTemplates[String(selectedWorkflowId)]) return
+    const workflowId = selectedWorkflowId
 
     let active = true
 
@@ -217,19 +245,19 @@ function ConfigView({ accessToken, canDeleteFlow = false, canReorder = false, cu
         setLoadingWorkflows(true)
         setWorkflowError('')
 
-        const response = await apiRequest<FlowStructureResponse>(`${workflowStructureBasePath}/${selectedWorkflowId}/structure`, { token: accessToken })
+        const response = await fetchWorkflowStructure(workflowId)
 
         if (!active) return
 
         setWorkflowTemplates((current) => ({
           ...current,
-          [String(selectedWorkflowId)]: mapStructureToTemplate(response),
+          [String(workflowId)]: mapStructureToTemplate(response),
         }))
       } catch (error) {
         if (!active) return
         setWorkflowTemplates((current) => ({
           ...current,
-          [String(selectedWorkflowId)]: [],
+          [String(workflowId)]: [],
         }))
         setWorkflowError(error instanceof Error ? error.message : 'Unable to load workflow structure.')
       } finally {
@@ -242,7 +270,7 @@ function ConfigView({ accessToken, canDeleteFlow = false, canReorder = false, cu
     return () => {
       active = false
     }
-  }, [accessToken, selectedWorkflowId, workflowStructureBasePath, workflowTemplates])
+  }, [fetchWorkflowStructure, selectedWorkflowId, workflowTemplates])
 
   useEffect(() => {
     setOrderDirty(false)
@@ -376,7 +404,7 @@ function ConfigView({ accessToken, canDeleteFlow = false, canReorder = false, cu
           })),
         }),
       })
-      const structure = await apiRequest<FlowStructureResponse>(`${workflowStructureBasePath}/${selectedWorkflowId}/structure`, { token: accessToken })
+      const structure = await fetchWorkflowStructure(selectedWorkflowId)
       setWorkflowTemplates((current) => ({
         ...current,
         [String(selectedWorkflowId)]: mapStructureToTemplate(structure),
@@ -432,10 +460,7 @@ function ConfigView({ accessToken, canDeleteFlow = false, canReorder = false, cu
           }),
         },
       )
-      const structure = await apiRequest<FlowStructureResponse>(
-        `${workflowStructureBasePath}/${selectedWorkflowId}/structure`,
-        { token: accessToken },
-      )
+      const structure = await fetchWorkflowStructure(selectedWorkflowId)
       setWorkflowTemplates((current) => ({
         ...current,
         [String(selectedWorkflowId)]: mapStructureToTemplate(structure),

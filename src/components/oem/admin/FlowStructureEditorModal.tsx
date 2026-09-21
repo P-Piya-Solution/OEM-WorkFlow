@@ -102,6 +102,30 @@ function FlowStructureEditorModal({
     structure.stages.map((stage, stageIndex) => `${structure.flow.id}-stage-${stage.id || stageIndex}`),
   ))
 
+  function toggleStage(stageIndex: number, stageKey: string) {
+    setCollapsedStages((current) => {
+      const next = new Set(current)
+      const isOpening = next.has(stageKey)
+
+      if (isOpening) next.delete(stageKey)
+      else next.add(stageKey)
+
+      if (isOpening) {
+        const firstPhase = structure.stages[stageIndex]?.phases[0]
+        if (firstPhase) {
+          const phaseKey = `${stageKey}-phase-${firstPhase.id || 0}`
+          setCollapsedPhases((collapsed) => {
+            const nextPhases = new Set(collapsed)
+            nextPhases.delete(phaseKey)
+            return nextPhases
+          })
+        }
+      }
+
+      return next
+    })
+  }
+
   function startStageDrag(event: DragEvent<HTMLButtonElement>, stageIndex: number) {
     event.stopPropagation()
     event.dataTransfer.effectAllowed = 'move'
@@ -156,7 +180,7 @@ function FlowStructureEditorModal({
               >
                 <div
                   className="admin-flow-collapse-row admin-flow-stage-head grid grid-cols-[32px_22px_auto_minmax(0,1fr)_auto_auto] items-center gap-0 bg-slate-50 px-4 py-2.5 transition hover:bg-slate-100"
-                  onClick={() => toggleCollapsed(setCollapsedStages, stageKey)}
+                  onClick={() => toggleStage(stageIndex, stageKey)}
                 >
                   <button aria-label={`Drag Stage ${stageIndex + 1} to reorder`} className="admin-flow-drag-handle" draggable onClick={(event) => event.stopPropagation()} onDragEnd={finishDrag} onDragStart={(event) => startStageDrag(event, stageIndex)} title="Drag to reorder stage" type="button">
                     <span aria-hidden="true">⠿</span>
@@ -167,7 +191,7 @@ function FlowStructureEditorModal({
                     className="config-toggle-btn"
                     onClick={(event) => {
                       event.stopPropagation()
-                      toggleCollapsed(setCollapsedStages, stageKey)
+                      toggleStage(stageIndex, stageKey)
                     }}
                     type="button"
                   >
