@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Itim&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -17,7 +18,7 @@
   --navy: #16202b;
   --shadow: 0 14px 34px rgba(31, 42, 55, 0.07);
 
-  font-family: "IBM Plex Sans Thai", "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
+  font-family: "Itim", cursive;
   color: var(--ink);
   background: var(--page-bg);
   font-synthesis: none;

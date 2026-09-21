@@ -2718,7 +2718,7 @@ button:disabled {
 .config-table td:nth-child(2) > div:last-child {
   margin-top: 2px;
   color: #9ca3af;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family: "Itim", cursive;
   font-size: 11.5px;
   font-weight: 700;
 }

@@ -562,7 +562,7 @@ function AdminDashboard({ configSection = 'flows', mode = 'admin', onCustomerSta
       setActionError('')
       setActionMessage('')
       setBusyAction(`flow-structure-${flow.id}`)
-      const response = await apiRequest<FlowStructure>(`/workflow/flows/${flow.id}/structure`, { token })
+      const response = await apiRequest<FlowStructure>(`/admin/flows/${flow.id}/structure`, { token })
       setStructureEditor({
         ...response,
         stages: response.stages.map((stage) => ({
